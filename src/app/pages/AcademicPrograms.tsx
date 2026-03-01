@@ -65,8 +65,8 @@ export function AcademicPrograms() {
               className={clsx(
                 "w-full flex items-center gap-3 p-3 rounded-lg border transition-all text-left group",
                 selectedId === p.id 
-                  ? "border-blue-500 bg-white shadow-sm ring-2 ring-blue-100" 
-                  : "border-gray-100 bg-white text-gray-500 hover:bg-gray-50 hover:border-gray-200"
+                  ? "ceit-card ring-2 ring-blue-100" 
+                  : "ceit-card text-gray-500 hover:border-blue-200"
               )}
             >
               <div className={clsx("w-10 h-10 rounded-lg flex items-center justify-center text-white shadow", p.color)}>
@@ -85,7 +85,7 @@ export function AcademicPrograms() {
           ))}
         </div>
 
-        <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
+        <div className="mt-6 p-4 ceit-card-soft">
           <h4 className="text-xs font-semibold text-blue-900 flex items-center gap-2 mb-1.5">
             <CheckCircle className="w-3.5 h-3.5" />
             Admin Tip
@@ -98,7 +98,7 @@ export function AcademicPrograms() {
 
       {/* Program Editor Area */}
       <div className="lg:col-span-9">
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm flex flex-col h-full">
+        <div className="ceit-card overflow-hidden flex flex-col h-full">
           {/* Editor Header */}
           <div className="p-5 border-b border-gray-100 flex items-center justify-between bg-gray-50">
             <div className="flex items-center gap-3">
@@ -131,15 +131,15 @@ export function AcademicPrograms() {
           {/* Editor Body */}
           <div className="flex-1 p-6 space-y-5 overflow-y-auto">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 text-center hover:bg-white hover:shadow-sm transition-all">
+              <div className="p-4 ceit-card-soft text-center transition-all">
                 <span className="text-2xl font-bold text-gray-900 block">{selectedProgram.stats.students}</span>
                 <span className="text-xs font-medium text-gray-500">Students</span>
               </div>
-              <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 text-center hover:bg-white hover:shadow-sm transition-all">
+              <div className="p-4 ceit-card-soft text-center transition-all">
                 <span className="text-2xl font-bold text-gray-900 block">{selectedProgram.stats.faculty}</span>
                 <span className="text-xs font-medium text-gray-500">Faculty</span>
               </div>
-              <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 text-center hover:bg-white hover:shadow-sm transition-all">
+              <div className="p-4 ceit-card-soft text-center transition-all">
                 <span className="text-2xl font-bold text-gray-900 block">{selectedProgram.stats.labs}</span>
                 <span className="text-xs font-medium text-gray-500">Labs</span>
               </div>

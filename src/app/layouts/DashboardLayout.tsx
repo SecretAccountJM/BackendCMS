@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { 
   LayoutDashboard, 
@@ -56,16 +57,27 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-dvh min-h-dvh bg-slate-100">
       {/* Fixed Sidebar */}
-      <aside className="w-64 bg-slate-950 text-white flex flex-col shrink-0 border-r border-slate-800">
+      <aside
+        className="w-64 text-white flex flex-col shrink-0 border-r border-slate-800 bg-slate-950/85 bg-blend-multiply bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url('/backend_navbar.png')" }}
+      >
         <div className="px-4 py-4 border-b border-slate-800">
           <div className="flex items-center gap-2.5 mb-1">
-            <div className="w-8 h-8 bg-blue-600 rounded-md flex items-center justify-center font-semibold text-white text-sm">E</div>
+            <div className="w-8 h-8 rounded-full bg-white/90 p-0.5 flex items-center justify-center overflow-hidden">
+              <Image
+                src="/CEIT_Logo.png"
+                alt="CEIT Logo"
+                width={28}
+                height={28}
+                className="h-7 w-7 object-contain"
+              />
+            </div>
             <div>
               <h1 className="text-base font-semibold tracking-tight text-slate-100">CEIT CMS</h1>
               <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wide">Administration</p>
             </div>
           </div>
-          <p className="text-xs text-slate-400 font-medium">University Engineering</p>
+          <p className="text-xs text-slate-400 font-medium">College of Engineering and Information Technology</p>
         </div>
         
         <nav className="flex-1 py-3 overflow-y-auto">
@@ -78,12 +90,15 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                   className={cn(
                     "group flex items-center gap-2.5 px-3 py-2 rounded-md transition-colors border",
                     pathname === item.path
-                      ? "bg-blue-600 text-white border-blue-500"
+                      ? "bg-orange-500 text-white border-orange-400"
                       : "text-slate-300 border-transparent hover:text-white hover:bg-slate-900 hover:border-slate-800"
                   )}
                 >
                   <item.icon className="w-4 h-4 flex-shrink-0 text-slate-300 group-hover:text-white" />
-                  <span className="text-sm font-medium">{item.name}</span>
+                  <span className={cn(
+                    "relative text-sm font-medium after:content-[''] after:absolute after:left-0 after:-bottom-0.5 after:h-0.5 after:w-full after:origin-left after:scale-x-0 after:transition-transform after:duration-300 group-hover:after:scale-x-100",
+                    pathname === item.path ? "after:scale-x-100 after:bg-[#1f3168]" : "after:bg-orange-400"
+                  )}>{item.name}</span>
                 </Link>
               </li>
             ))}
@@ -100,12 +115,15 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                   className={cn(
                     "group flex items-center gap-2.5 px-3 py-2 rounded-md transition-colors border",
                     pathname === item.path
-                      ? "bg-blue-600 text-white border-blue-500"
+                      ? "bg-orange-500 text-white border-orange-400"
                       : "text-slate-300 border-transparent hover:text-white hover:bg-slate-900 hover:border-slate-800"
                   )}
                 >
                   <item.icon className="w-4 h-4 flex-shrink-0 text-slate-300 group-hover:text-white" />
-                  <span className="text-sm font-medium">{item.name}</span>
+                  <span className={cn(
+                    "relative text-sm font-medium after:content-[''] after:absolute after:left-0 after:-bottom-0.5 after:h-0.5 after:w-full after:origin-left after:scale-x-0 after:transition-transform after:duration-300 group-hover:after:scale-x-100",
+                    pathname === item.path ? "after:scale-x-100 after:bg-[#1f3168]" : "after:bg-orange-400"
+                  )}>{item.name}</span>
                 </Link>
               </li>
             ))}
@@ -121,12 +139,15 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 className={cn(
                   "group flex items-center gap-2.5 px-3 py-2 rounded-md transition-colors border",
                   pathname === "/approvals"
-                    ? "bg-blue-600 text-white border-blue-500"
+                    ? "bg-orange-500 text-white border-orange-400"
                     : "text-slate-300 border-transparent hover:text-white hover:bg-slate-900 hover:border-slate-800"
                 )}
               >
                 <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-slate-300 group-hover:text-white" />
-                <span className="text-sm font-medium">Approval</span>
+                <span className={cn(
+                  "relative text-sm font-medium after:content-[''] after:absolute after:left-0 after:-bottom-0.5 after:h-0.5 after:w-full after:origin-left after:scale-x-0 after:transition-transform after:duration-300 group-hover:after:scale-x-100",
+                  pathname === "/approvals" ? "after:scale-x-100 after:bg-[#1f3168]" : "after:bg-orange-400"
+                )}>Approval</span>
               </Link>
             </li>
           </ul>

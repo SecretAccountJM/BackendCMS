@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from "react";
-import { Save, Plus } from "lucide-react";
+import { Save, Plus, BookOpen, GraduationCap } from "lucide-react";
 import { toast } from "sonner";
 
 interface Requirement {
@@ -153,25 +153,27 @@ export function AcademicsSettings() {
   return (
     <div className="space-y-5">
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-gray-300 pb-3">
+      <div className="flex flex-wrap gap-3 pb-1">
         <button
           onClick={() => setActiveTab('about')}
-          className={`px-3 py-2 text-xs font-bold uppercase tracking-wide rounded transition-colors ${
+          className={`ceit-subtab ${
             activeTab === 'about'
-              ? 'bg-slate-900 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              ? 'ceit-subtab-active'
+              : 'ceit-subtab-inactive'
           }`}
         >
+          <BookOpen className="w-4 h-4" />
           About CEIT
         </button>
         <button
           onClick={() => setActiveTab('admission')}
-          className={`px-3 py-2 text-xs font-bold uppercase tracking-wide rounded transition-colors ${
+          className={`ceit-subtab ${
             activeTab === 'admission'
-              ? 'bg-slate-900 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              ? 'ceit-subtab-active'
+              : 'ceit-subtab-inactive'
           }`}
         >
+          <GraduationCap className="w-4 h-4" />
           Admission
         </button>
       </div>
@@ -180,7 +182,7 @@ export function AcademicsSettings() {
       {activeTab === 'about' && (
         <div className="space-y-5">
           {/* About Description */}
-          <div className="bg-white border border-gray-400 p-5">
+          <div className="ceit-card p-5">
             <h2 className="text-base font-bold text-slate-900 mb-3 uppercase">About CEIT Description</h2>
             <textarea
               value={data.aboutCEIT.description}
@@ -190,7 +192,7 @@ export function AcademicsSettings() {
           </div>
 
           {/* Bullet Points */}
-          <div className="bg-white border border-gray-400 p-5">
+          <div className="ceit-card p-5">
             <h2 className="text-base font-bold text-slate-900 mb-3 uppercase">Key Points</h2>
             <div className="space-y-2 mb-3">
               {data.aboutCEIT.bulletPoints.map((point) => (
@@ -220,7 +222,7 @@ export function AcademicsSettings() {
           </div>
 
           {/* Core Values */}
-          <div className="bg-white border border-gray-400 p-5">
+          <div className="ceit-card p-5">
             <h2 className="text-base font-bold text-slate-900 mb-3 uppercase">Core Values</h2>
             <div className="space-y-2 mb-3">
               {data.coreValues.map((value) => (
@@ -250,7 +252,7 @@ export function AcademicsSettings() {
           </div>
 
           {/* College Aim */}
-          <div className="bg-white border border-gray-400 p-5">
+          <div className="ceit-card p-5">
             <h2 className="text-base font-bold text-slate-900 mb-3 uppercase">College Aim</h2>
             <div className="space-y-2 mb-3">
               {data.collegeAim.map((aim) => (
@@ -280,7 +282,7 @@ export function AcademicsSettings() {
           </div>
 
           {/* Academic Support */}
-          <div className="bg-white border border-gray-400 p-5">
+          <div className="ceit-card p-5">
             <h2 className="text-base font-bold text-slate-900 mb-3 uppercase">Academic Support</h2>
             <div className="space-y-2 mb-3">
               {data.academicSupport.map((support) => (
@@ -314,7 +316,7 @@ export function AcademicsSettings() {
       {/* Admission Tab */}
       {activeTab === 'admission' && (
         <div className="space-y-5">
-          <div className="bg-white border border-gray-400 p-5">
+          <div className="ceit-card p-5">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-base font-bold text-slate-900 uppercase">Admission Information</h2>
               {!isAdmissionEditing ? (

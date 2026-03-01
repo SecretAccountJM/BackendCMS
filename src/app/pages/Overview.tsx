@@ -25,7 +25,7 @@ const data = [
 ];
 
 const StatCard = ({ title, value, change, trend, icon: Icon, color }: any) => (
-  <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+  <div className="ceit-card p-4 transition-shadow">
     <div className="flex justify-between items-start">
       <div className={`p-1.5 rounded-lg ${color}`}>
         <Icon className="w-4 h-4 text-white" />
@@ -81,7 +81,7 @@ export function Overview() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
+        <div className="ceit-card p-5">
           <h3 className="text-sm font-semibold text-gray-800 mb-4">Traffic Overview</h3>
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -102,7 +102,7 @@ export function Overview() {
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
+        <div className="ceit-card p-5">
           <h3 className="text-sm font-semibold text-gray-800 mb-4">Post Frequency</h3>
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">

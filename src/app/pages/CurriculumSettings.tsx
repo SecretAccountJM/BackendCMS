@@ -123,13 +123,14 @@ export function CurriculumSettings() {
                 setDraft(null);
               }}
               className={clsx(
-                "w-full flex items-center gap-3 p-3 border transition-all text-left",
+                "w-full justify-between text-left",
+                "ceit-subtab",
                 selectedId === p.id 
-                  ? "border-slate-900 bg-slate-900 text-white ring-2 ring-slate-400" 
-                  : "border-gray-400 bg-white text-slate-900 hover:bg-gray-100 hover:border-gray-500"
+                  ? "ceit-subtab-active"
+                  : "ceit-subtab-inactive"
               )}
             >
-              <div className={clsx("w-8 h-8 flex items-center justify-center text-xs font-bold", selectedId === p.id ? "bg-white text-slate-900" : `${p.color} text-white`)}>
+              <div className={clsx("w-8 h-8 rounded-md flex items-center justify-center text-xs font-bold", selectedId === p.id ? "bg-white/20 text-white" : `${p.color} text-white`)}>
                 <p.icon className="w-4 h-4" />
               </div>
               <div className="flex-1 min-w-0">
@@ -137,7 +138,7 @@ export function CurriculumSettings() {
                   {p.id}
                 </span>
               </div>
-              <ChevronRight className="w-3 h-3 flex-shrink-0" />
+              <ChevronRight className="w-3 h-3 flex-shrink-0 opacity-80" />
             </button>
           ))}
         </div>
@@ -145,7 +146,7 @@ export function CurriculumSettings() {
 
       {/* Program Editor Area */}
       <div className="lg:col-span-9">
-        <div className="bg-white border border-gray-400 overflow-hidden flex flex-col h-full">
+        <div className="ceit-card overflow-hidden flex flex-col h-full">
           {/* Editor Header */}
           <div className="p-4 border-b border-gray-300 flex items-center justify-between bg-gray-100">
             <div className="flex items-center gap-3">

@@ -123,7 +123,7 @@ export function HomeSettings() {
   return (
     <div className="space-y-5">
       {/* College Intro Section */}
-      <div className="bg-white border border-gray-400 p-5">
+      <div className="ceit-card p-5">
         <h2 className="text-base font-bold text-slate-900 mb-4 uppercase tracking-wide">College Intro Section</h2>
         
         <div className="space-y-3">
@@ -157,7 +157,7 @@ export function HomeSettings() {
       </div>
 
       {/* Meet the Dean Section */}
-      <div className="bg-white border border-gray-400 p-5">
+      <div className="ceit-card p-5">
         <h2 className="text-base font-bold text-slate-900 mb-4 uppercase tracking-wide">Meet the Dean</h2>
         
         <div className="space-y-3">
@@ -192,7 +192,7 @@ export function HomeSettings() {
       </div>
 
       {/* Registrar Section */}
-      <div className="bg-white border border-gray-400 p-5">
+      <div className="ceit-card p-5">
         <h2 className="text-base font-bold text-slate-900 mb-4 uppercase tracking-wide">Registrar's Office</h2>
         
         <div className="space-y-3">
@@ -263,7 +263,7 @@ export function HomeSettings() {
             <h3 className="text-xs font-bold text-slate-900 mb-3 uppercase">Services</h3>
             <div className="space-y-2 mb-2">
               {data.registrarSection.services.map((service) => (
-                <div key={service.id} className="flex items-center justify-between bg-gray-100 p-2 border border-gray-300">
+                <div key={service.id} className="ceit-card-soft flex items-center justify-between p-2">
                   <span className="text-xs text-slate-900 font-medium">{service.title}</span>
                   <button
                     onClick={() => removeService(service.id)}

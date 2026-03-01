@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from "react";
-import { Plus, Edit2 } from "lucide-react";
+import { Plus, Edit2, Users, Building2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface BoardMember {
@@ -132,25 +132,27 @@ export function AdministratorSettings() {
   return (
     <div className="space-y-6">
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-gray-300 pb-3">
+      <div className="flex flex-wrap gap-3 pb-1">
         <button
           onClick={() => setActiveTab('board')}
-          className={`px-3 py-2 text-xs font-bold uppercase tracking-wide rounded transition-colors ${
+          className={`ceit-subtab ${
             activeTab === 'board'
-              ? 'bg-slate-900 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              ? 'ceit-subtab-active'
+              : 'ceit-subtab-inactive'
           }`}
         >
+          <Users className="w-4 h-4" />
           Board of Regents
         </button>
         <button
           onClick={() => setActiveTab('org')}
-          className={`px-3 py-2 text-xs font-bold uppercase tracking-wide rounded transition-colors ${
+          className={`ceit-subtab ${
             activeTab === 'org'
-              ? 'bg-slate-900 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              ? 'ceit-subtab-active'
+              : 'ceit-subtab-inactive'
           }`}
         >
+          <Building2 className="w-4 h-4" />
           Organizational Chart
         </button>
       </div>
@@ -175,7 +177,7 @@ export function AdministratorSettings() {
       {/* Members List */}
       <div className="space-y-3">
         {currentMembers.map((member) => (
-          <div key={member.id} className="bg-white border border-gray-400 rounded p-4 hover:bg-gray-50 transition-colors">
+          <div key={member.id} className="ceit-card p-4 transition-colors">
             {editingId === member.id && editForm ? (
               <div className="space-y-3">
                 <div>
