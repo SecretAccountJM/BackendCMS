@@ -11,7 +11,9 @@ import {
   Settings,
   Users,
   BookOpen,
-  GraduationCap
+  GraduationCap,
+  Newspaper,
+  BookText
 } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -32,6 +34,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     { name: "Academics", path: "/academics-settings", icon: BookOpen },
     { name: "Administrator", path: "/administrator-settings", icon: Users },
     { name: "Curriculum", path: "/programs", icon: GraduationCap },
+    { name: "News", path: "/news-settings", icon: Newspaper },
+    { name: "CEIT Newsletter", path: "/newsletter-settings", icon: BookText },
   ];
 
   const getPageInfo = () => {
