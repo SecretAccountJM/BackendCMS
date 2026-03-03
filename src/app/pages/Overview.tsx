@@ -1,6 +1,6 @@
 'use client'
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { 
   BarChart, 
   Bar, 
@@ -13,16 +13,33 @@ import {
   Area 
 } from "recharts";
 import { TrendingUp, Users, Eye, FileText, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { fetchDashboardAnalytics, type DashboardAnalytics } from "@/lib/api";
 
-const data = [
-  { name: "Mon", views: 400, posts: 24 },
-  { name: "Tue", views: 300, posts: 13 },
-  { name: "Wed", views: 200, posts: 98 },
-  { name: "Thu", views: 278, posts: 39 },
-  { name: "Fri", views: 189, posts: 48 },
-  { name: "Sat", views: 239, posts: 38 },
-  { name: "Sun", views: 349, posts: 43 },
-];
+const EMPTY_ANALYTICS: DashboardAnalytics = {
+  total_page_views: 0,
+  total_articles: 0,
+  student_engagement: 0,
+  active_admins: 0,
+  traffic_overview: [
+    { name: "Mon", views: 0 },
+    { name: "Tue", views: 0 },
+    { name: "Wed", views: 0 },
+    { name: "Thu", views: 0 },
+    { name: "Fri", views: 0 },
+    { name: "Sat", views: 0 },
+    { name: "Sun", views: 0 },
+  ],
+  post_frequency: [
+    { name: "Mon", posts: 0 },
+    { name: "Tue", posts: 0 },
+    { name: "Wed", posts: 0 },
+    { name: "Thu", posts: 0 },
+    { name: "Fri", posts: 0 },
+    { name: "Sat", posts: 0 },
+    { name: "Sun", posts: 0 },
+  ],
+  last_updated: "",
+};
 
 const StatCard = ({ title, value, change, trend, icon: Icon, color }: any) => (
   <div className="ceit-card p-4 transition-shadow">
@@ -43,37 +60,63 @@ const StatCard = ({ title, value, change, trend, icon: Icon, color }: any) => (
 );
 
 export function Overview() {
+  const [analytics, setAnalytics] = useState<DashboardAnalytics>(EMPTY_ANALYTICS);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const load = async () => {
+      try {
+        const data = await fetchDashboardAnalytics();
+        if (isMounted) {
+          setAnalytics(data);
+        }
+      } catch {
+      }
+    };
+
+    void load();
+    const intervalId = window.setInterval(() => {
+      void load();
+    }, 8000);
+
+    return () => {
+      isMounted = false;
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard 
           title="Total Page Views" 
-          value="12,482" 
-          change="12.5%" 
+          value={analytics.total_page_views.toLocaleString()} 
+          change="Live" 
           trend="up" 
           icon={Eye} 
           color="bg-blue-500" 
         />
         <StatCard 
           title="Total Articles" 
-          value="156" 
-          change="8.2%" 
+          value={analytics.total_articles.toLocaleString()} 
+          change="Live" 
           trend="up" 
           icon={FileText} 
           color="bg-purple-500" 
         />
         <StatCard 
           title="Student Engagement" 
-          value="84%" 
-          change="3.1%" 
-          trend="down" 
+          value={`${analytics.student_engagement}%`} 
+          change="Live" 
+          trend="up" 
           icon={Users} 
           color="bg-orange-500" 
         />
         <StatCard 
           title="Active Admins" 
-          value="12" 
-          change="0%" 
+          value={analytics.active_admins.toLocaleString()} 
+          change="Live" 
           trend="up" 
           icon={TrendingUp} 
           color="bg-green-500" 
@@ -85,7 +128,7 @@ export function Overview() {
           <h3 className="text-sm font-semibold text-gray-800 mb-4">Traffic Overview</h3>
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data}>
+              <AreaChart data={analytics.traffic_overview}>
                 <defs>
                   <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
@@ -106,7 +149,7 @@ export function Overview() {
           <h3 className="text-sm font-semibold text-gray-800 mb-4">Post Frequency</h3>
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data}>
+              <BarChart data={analytics.post_frequency}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: "#94a3b8", fontSize: 11}} />
                 <YAxis axisLine={false} tickLine={false} tick={{fill: "#94a3b8", fontSize: 11}} />
@@ -116,6 +159,10 @@ export function Overview() {
             </ResponsiveContainer>
           </div>
         </div>
+      </div>
+
+      <div className="text-[11px] text-slate-500">
+        Last updated: {analytics.last_updated ? new Date(analytics.last_updated).toLocaleTimeString() : "--:--:--"}
       </div>
     </div>
   );
