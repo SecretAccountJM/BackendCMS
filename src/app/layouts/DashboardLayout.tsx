@@ -165,7 +165,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold text-slate-100 truncate">{user?.name}</p>
-              <span className="text-[10px] px-1.5 py-0.5 bg-blue-600/20 text-blue-300 border border-blue-700/50 rounded font-medium inline-block">{user?.role}</span>
+              <span className="text-[10px] px-1.5 py-0.5 bg-blue-600/20 text-blue-300 border border-blue-700/50 rounded font-medium inline-block">{user?.role === 'super_admin' ? 'Super Admin' : 'Admin'}</span>
             </div>
             <button
               id="logout-btn"

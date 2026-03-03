@@ -1,10 +1,12 @@
 export type ArticleStatus = "draft" | "pending" | "approved" | "archived";
+export type ArticleCategory = "announcements" | "achievements" | "events" | "partnerships";
 
 export interface Article {
   id: string;
   author_id: string;
   title: string;
   body: string;
+  category: ArticleCategory;
   image_path?: string | null;
   image_alt_text?: string | null;
   status: ArticleStatus;
@@ -20,6 +22,7 @@ export interface Article {
 export interface ArticleUpdatePayload {
   title?: string;
   body?: string;
+  category?: ArticleCategory;
   image_path?: string | null;
   image_alt_text?: string | null;
   status?: ArticleStatus;

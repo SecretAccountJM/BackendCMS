@@ -5,6 +5,7 @@ import { loginAdmin } from '@/lib/api';
 
 export interface AdminUser {
     id: number;
+    backendUserId?: string;
     name: string;
     email: string;
     role: string;
@@ -17,7 +18,7 @@ interface AuthContextType {
     logout: () => void;
 }
 
-// ── 4 Hardcoded Admin Accounts ──────────────────────────────────────────────
+// ── 4 Hardcoded Admin Accounts (Remove nyo to pag idddeploy na)
 const ADMIN_ACCOUNTS = [
     { id: 1, name: 'Super Admin', email: 'admin@ceit.edu', password: 'Admin123!', role: 'super_admin' },
     { id: 2, name: 'Civil Engineer', email: 'ce.author@ceit.edu', password: 'Admin123!', role: 'author_ce' },
@@ -26,6 +27,7 @@ const ADMIN_ACCOUNTS = [
 ];
 
 type JwtPayload = {
+    sub?: string;
     first_name?: string;
     last_name?: string;
     role_name?: string;
@@ -76,6 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const derivedName = `${payload?.first_name ?? ''} ${payload?.last_name ?? ''}`.trim();
             const safeUser: AdminUser = {
                 id: match.id,
+                backendUserId: payload?.sub,
                 email: match.email,
                 name: derivedName || match.name,
                 role: payload?.role_name || match.role,

@@ -1,4 +1,4 @@
-import type { Article, ArticleStatus, ArticleUpdatePayload } from "@/types/article";
+import type { Article, ArticleStatus, ArticleUpdatePayload, ArticleCategory } from "@/types/article";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000/api/v1";
 
@@ -20,8 +20,19 @@ export interface AuthTokenResponse {
 export interface CreateArticlePayload {
   title: string;
   body: string;
+  category: ArticleCategory;
   image_path?: string | null;
   image_alt_text?: string | null;
+}
+
+export interface DashboardAnalytics {
+  total_page_views: number;
+  total_articles: number;
+  student_engagement: number;
+  active_admins: number;
+  traffic_overview: Array<{ name: string; views: number }>;
+  post_frequency: Array<{ name: string; posts: number }>;
+  last_updated: string;
 }
 
 async function apiRequest<T>(path: string, init?: RequestInit, requireAuth = false): Promise<T> {
@@ -78,6 +89,14 @@ export async function fetchAdminArticles(): Promise<Article[]> {
   return apiRequest<Article[]>("/articles/admin/all", undefined, true);
 }
 
+export async function fetchMyArticles(): Promise<Article[]> {
+  return apiRequest<Article[]>("/articles/my-articles", undefined, true);
+}
+
+export async function fetchDashboardAnalytics(): Promise<DashboardAnalytics> {
+  return apiRequest<DashboardAnalytics>("/articles/admin/analytics", undefined, true);
+}
+
 export async function createArticle(payload: CreateArticlePayload): Promise<Article> {
   return apiRequest<Article>("/articles/", {
     method: "POST",
@@ -95,6 +114,45 @@ export async function updateArticle(articleId: string, payload: ArticleUpdatePay
 export async function updateArticleStatus(articleId: string, status: ArticleStatus): Promise<Article> {
   const payload: ArticleUpdatePayload = { status };
   return updateArticle(articleId, payload);
+}
+
+export async function uploadArticleImage(articleId: string, file: File): Promise<Article> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const headers: Record<string, string> = {};
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+  }
+
+  const response = await fetch(`${API_BASE_URL}/articles/${articleId}/upload-image`, {
+    method: "POST",
+    headers,
+    body: formData,
+  });
+
+  const raw = await response.text();
+  let data: unknown = null;
+  if (raw) {
+    try {
+      data = JSON.parse(raw) as unknown;
+    } catch {
+      data = raw;
+    }
+  }
+
+  if (!response.ok) {
+    const detail =
+      typeof data === "object" && data !== null && "detail" in data
+        ? String((data as { detail?: string }).detail)
+        : `Request failed with status ${response.status}`;
+    throw new ApiError(detail, response.status);
+  }
+
+  return data as Article;
 }
 
 export { ApiError };
