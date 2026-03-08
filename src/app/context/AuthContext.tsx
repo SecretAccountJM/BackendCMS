@@ -3,26 +3,21 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 export interface AdminUser {
-    id: number;
-    name: string;
+    id?: string;
+    name?: string;
     email: string;
-    role: string;
+    role?: string;
+    first_name?: string;
+    last_name?: string;
+    role_name?: string;
 }
 
 interface AuthContextType {
     user: AdminUser | null;
     isAuthenticated: boolean;
-    login: (email: string, password: string) => boolean;
+    login: (email: string, password: string) => Promise<boolean>;
     logout: () => void;
 }
-
-// ── 4 Hardcoded Admin Accounts ──────────────────────────────────────────────
-const ADMIN_ACCOUNTS = [
-    { id: 1, name: 'Dr. John Santos', email: 'dean@ceit.edu', password: 'admin1234', role: 'Dean' },
-    { id: 2, name: 'Prof. Maria Reyes', email: 'bseechaiperson@ceit.edu', password: 'admin5678', role: 'Chairperson' },
-    { id: 3, name: 'Engr. Carlo Cruz', email: 'bsitchaiperson.edu', password: 'admin9012', role: 'Chairperson' },
-    { id: 4, name: 'Ms. Ana Lim', email: 'bscechaiperson', password: 'admin3456', role: 'Chairperson' },
-];
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -32,27 +27,63 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Persist login across page refreshes
     useEffect(() => {
         const stored = sessionStorage.getItem('ceit_admin_user');
-        if (stored) {
+        const token = sessionStorage.getItem('ceit_access_token');
+        if (stored && token) {
             try { setUser(JSON.parse(stored)); } catch { /* ignore */ }
         }
     }, []);
 
-    const login = (email: string, password: string): boolean => {
-        const match = ADMIN_ACCOUNTS.find(
-            (a) => a.email.toLowerCase() === email.toLowerCase() && a.password === password
-        );
-        if (match) {
-            const { password: _pw, ...safeUser } = match;
-            setUser(safeUser);
-            sessionStorage.setItem('ceit_admin_user', JSON.stringify(safeUser));
+    const login = async (email: string, password: string): Promise<boolean> => {
+        try {
+            const response = await fetch('http://localhost:8000/api/v1/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => null);
+                console.error('Login failed:', response.status, errorData);
+                return false;
+            }
+
+            const data = await response.json();
+            
+            // Store tokens
+            sessionStorage.setItem('ceit_access_token', data.access_token);
+            if (data.refresh_token) {
+                sessionStorage.setItem('ceit_refresh_token', data.refresh_token);
+            }
+
+            // Decode JWT to get user info
+            const decoded = JSON.parse(atob(data.access_token.split('.')[1]));
+            
+            const userData: AdminUser = {
+                email,
+                first_name: decoded.first_name,
+                last_name: decoded.last_name,
+                name: `${decoded.first_name} ${decoded.last_name}`,
+                role_name: decoded.role_name,
+                role: decoded.role_name,
+                id: decoded.sub,
+            };
+
+            setUser(userData);
+            sessionStorage.setItem('ceit_admin_user', JSON.stringify(userData));
             return true;
+        } catch (error) {
+            console.error('Login error:', error);
+            return false;
         }
-        return false;
     };
 
     const logout = () => {
         setUser(null);
         sessionStorage.removeItem('ceit_admin_user');
+        sessionStorage.removeItem('ceit_access_token');
+        sessionStorage.removeItem('ceit_refresh_token');
     };
 
     return (
