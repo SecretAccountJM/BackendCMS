@@ -25,12 +25,18 @@ export default function LoginPage() {
         e.preventDefault();
         setError('');
         setLoading(true);
-        await new Promise((r) => setTimeout(r, 600));
-        const ok = login(email.trim(), password);
-        if (ok) {
-            router.replace('/');
-        } else {
-            setError('Invalid email or password. Please try again.');
+        try {
+            const ok = await login(email.trim(), password);
+            if (ok) {
+                router.replace('/');
+            } else {
+                setError('Invalid email or password. Please try again.');
+                setLoading(false);
+                setShake(true);
+                setTimeout(() => setShake(false), 600);
+            }
+        } catch (err) {
+            setError('Login failed. Please try again.');
             setLoading(false);
             setShake(true);
             setTimeout(() => setShake(false), 600);

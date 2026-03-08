@@ -65,13 +65,16 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     router.replace('/login');
   };
 
+  const displayName = user?.name?.trim() || `${user?.first_name ?? ''} ${user?.last_name ?? ''}`.trim() || user?.email || 'Admin';
+  const displayRole = user?.role || user?.role_name || 'Administrator';
+
   // User initials for avatar
-  const initials = user?.name
+  const initials = displayName
     .split(' ')
     .filter((_: string, i: number) => i < 2)
     .map((w: string) => w[0])
     .join('')
-    .toUpperCase() ?? 'A';
+    .toUpperCase() || 'A';
 
   return (
     <div className="flex h-dvh min-h-dvh bg-slate-100">
@@ -164,8 +167,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               <span className="text-xs font-bold text-orange-300">{initials}</span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-slate-100 truncate">{user?.name}</p>
-              <span className="text-[10px] px-1.5 py-0.5 bg-blue-600/20 text-blue-300 border border-blue-700/50 rounded font-medium inline-block">{user?.role}</span>
+              <p className="text-xs font-semibold text-slate-100 truncate">{displayName}</p>
+              <span className="text-[10px] px-1.5 py-0.5 bg-blue-600/20 text-blue-300 border border-blue-700/50 rounded font-medium inline-block">{displayRole}</span>
             </div>
             <button
               id="logout-btn"
