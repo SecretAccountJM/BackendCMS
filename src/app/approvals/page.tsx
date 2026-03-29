@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
   CheckCircle2,
@@ -13,138 +13,129 @@ import {
   AlertCircle,
   ChevronDown,
   Trash2,
+  Loader2,
+  FileEdit,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { toast } from "sonner";
 import { usePathname, useSearchParams } from "next/navigation";
+import { apiFetch } from "../lib/api";
 
-type ArticleStatus = "pending" | "approved" | "archive" | "deleted";
+type ArticleStatus = "draft" | "pending" | "approved" | "archived";
 
 interface Article {
   id: string;
   title: string;
   body: string;
   author_id: string;
-  author_name: string;
+  author_first_name: string;
+  author_last_name: string;
+  author_email: string;
+  category: string;
   status: ArticleStatus;
-  image_path: string;
-  image_alt: string;
+  image_path: string | null;
+  image_alt_text: string | null;
+  like_count: number;
   created_at: string;
-  approved_at?: string;
-  archive_at?: string;
-  deleted_at?: string;
+  updated_at: string;
+  approved_at: string | null;
+  archived_at: string | null;
 }
 
-// Mock data - replace with real API calls
-const ARTICLES_DATA: Article[] = [
-  {
-    id: "1",
-    title: "Engineering Students Win National Innovation Award",
-    body: "A team of Civil Engineering students from our institution has won the prestigious National Innovation Award for their groundbreaking sustainable construction project...",
-    author_id: "author_ce_001",
-    author_name: "Dr. Ahmed Hassan",
-    status: "pending",
-    image_path: "/images/award.jpg",
-    image_alt: "Students receiving award",
-    created_at: "2026-02-25T10:30:00Z",
-  },
-  {
-    id: "2",
-    title: "New Electrical Engineering Lab Equipment Arrives",
-    body: "The EE department has received state-of-the-art testing and measurement equipment sponsored by leading industry partners...",
-    author_id: "author_ee_001",
-    author_name: "Prof. Sarah Williams",
-    status: "pending",
-    image_path: "/images/lab.jpg",
-    image_alt: "New lab equipment",
-    created_at: "2026-02-24T14:15:00Z",
-  },
-  {
-    id: "3",
-    title: "IT Department Hosts Cybersecurity Workshop",
-    body: "Industry experts from major tech companies conducted a comprehensive cybersecurity awareness workshop for all IT students...",
-    author_id: "author_it_001",
-    author_name: "Dr. Michael Chen",
-    status: "pending",
-    image_path: "/images/workshop.jpg",
-    image_alt: "Workshop in progress",
-    created_at: "2026-02-23T09:45:00Z",
-  },
-  {
-    id: "4",
-    title: "Annual Engineering Expo Successfully Concludes",
-    body: "The annual engineering expo showcased innovative student projects and attracted industry recruiters...",
-    author_id: "author_ce_001",
-    author_name: "Dr. Ahmed Hassan",
-    status: "approved",
-    image_path: "/images/expo.jpg",
-    image_alt: "Expo booths",
-    created_at: "2026-02-20T11:00:00Z",
-    approved_at: "2026-02-21T10:30:00Z",
-  },
-];
-
 export default function ArticleApprovalsPage() {
-  const [articles, setArticles] = useState<Article[]>(ARTICLES_DATA);
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const selectedStatusParam = searchParams.get("status");
   const selectedStatus: ArticleStatus =
     selectedStatusParam === "approved" ||
-    selectedStatusParam === "archive" ||
-    selectedStatusParam === "deleted"
+    selectedStatusParam === "archived" ||
+    selectedStatusParam === "draft"
       ? selectedStatusParam
       : "pending";
   const [expandedArticle, setExpandedArticle] = useState<string | null>(null);
   const [reviewComment, setReviewComment] = useState("");
 
+  const fetchArticles = useCallback(async () => {
+    try {
+      const data = await apiFetch<Article[]>("/articles/admin/all");
+      setArticles(data);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchArticles();
+  }, [fetchArticles]);
+
   const filteredArticles = articles.filter((article) => article.status === selectedStatus);
 
+  const draftCount = articles.filter((a) => a.status === "draft").length;
   const pendingCount = articles.filter((a) => a.status === "pending").length;
   const approvedCount = articles.filter((a) => a.status === "approved").length;
-  const archiveCount = articles.filter((a) => a.status === "archive").length;
-  const deletedCount = articles.filter((a) => a.status === "deleted").length;
+  const archivedCount = articles.filter((a) => a.status === "archived").length;
   const statusTabs: Array<{ key: ArticleStatus; label: string; count: number }> = [
     { key: "pending", label: "Pending", count: pendingCount },
     { key: "approved", label: "Approved", count: approvedCount },
-    { key: "archive", label: "Archive", count: archiveCount },
-    { key: "deleted", label: "Deleted", count: deletedCount },
+    { key: "draft", label: "Draft", count: draftCount },
+    { key: "archived", label: "Archived", count: archivedCount },
   ];
 
-  const handleApprove = (id: string) => {
-    setArticles((prev) =>
-      prev.map((article) =>
-        article.id === id
-          ? { ...article, status: "approved", approved_at: new Date().toISOString() }
-          : article
-      )
-    );
-    toast.success("Article approved successfully");
-    setReviewComment("");
+  const handleApprove = async (id: string) => {
+    setActionLoading(id);
+    try {
+      await apiFetch(`/articles/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({ status: "approved" }),
+      });
+      await fetchArticles();
+      toast.success("Article approved successfully");
+      setReviewComment("");
+    } catch (err: any) {
+      toast.error(`Failed to approve: ${err.message}`);
+    } finally {
+      setActionLoading(null);
+    }
   };
 
-  const handleReject = (id: string) => {
-    setArticles((prev) =>
-      prev.map((article) =>
-        article.id === id
-          ? { ...article, status: "archive", archive_at: new Date().toISOString() }
-          : article
-      )
-    );
-    toast.error("Article archived");
-    setReviewComment("");
+  const handleReject = async (id: string) => {
+    setActionLoading(id);
+    try {
+      await apiFetch(`/articles/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({ status: "archived" }),
+      });
+      await fetchArticles();
+      toast.error("Article archived");
+      setReviewComment("");
+    } catch (err: any) {
+      toast.error(`Failed to archive: ${err.message}`);
+    } finally {
+      setActionLoading(null);
+    }
   };
 
-  const handleDelete = (id: string) => {
-    setArticles((prev) =>
-      prev.map((article) =>
-        article.id === id
-          ? { ...article, status: "deleted", deleted_at: new Date().toISOString() }
-          : article
-      )
-    );
-    toast.error("Article deleted");
-    setReviewComment("");
+  const handleDelete = async (id: string) => {
+    setActionLoading(id);
+    try {
+      await apiFetch(`/articles/${id}`, {
+        method: "DELETE",
+      });
+      await fetchArticles();
+      toast.error("Article deleted");
+      setReviewComment("");
+    } catch (err: any) {
+      toast.error(`Failed to delete: ${err.message}`);
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -160,17 +151,17 @@ export default function ArticleApprovalsPage() {
 
   const getStatusBadge = (status: ArticleStatus) => {
     const styles = {
+      draft: "bg-slate-50 text-slate-700 border-slate-200",
       pending: "bg-amber-50 text-amber-700 border-amber-200",
       approved: "bg-green-50 text-green-700 border-green-200",
-      archive: "bg-slate-50 text-slate-700 border-slate-200",
-      deleted: "bg-red-50 text-red-700 border-red-200",
+      archived: "bg-red-50 text-red-700 border-red-200",
     };
 
     const icons = {
+      draft: FileEdit,
       pending: Clock,
       approved: CheckCircle2,
-      archive: Archive,
-      deleted: Trash2,
+      archived: Archive,
     };
 
     const Icon = icons[status];
@@ -181,6 +172,31 @@ export default function ArticleApprovalsPage() {
       </div>
     );
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <AlertCircle className="w-10 h-10 text-red-300 mx-auto mb-3" />
+          <p className="text-sm text-red-600">Failed to load articles: {error}</p>
+          <button
+            onClick={() => { setLoading(true); fetchArticles(); }}
+            className="mt-3 px-4 py-2 bg-slate-900 text-white text-xs font-medium rounded-lg hover:bg-slate-800"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full">
@@ -201,12 +217,12 @@ export default function ArticleApprovalsPage() {
               Approved: {approvedCount}
             </span>
             <span className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700">
-              <Archive className="w-3.5 h-3.5" />
-              Archive: {archiveCount}
+              <FileEdit className="w-3.5 h-3.5" />
+              Draft: {draftCount}
             </span>
             <span className="inline-flex items-center gap-1 rounded-md border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700">
-              <Trash2 className="w-3.5 h-3.5" />
-              Deleted: {deletedCount}
+              <Archive className="w-3.5 h-3.5" />
+              Archived: {archivedCount}
             </span>
           </div>
         </div>
@@ -264,15 +280,16 @@ export default function ArticleApprovalsPage() {
                 <div className="flex items-start gap-4">
                   {/* Thumbnail */}
                   <div className="w-20 h-20 rounded-lg bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center flex-shrink-0 border border-gray-200 overflow-hidden">
-                    <img
-                      src={article.image_path}
-                      alt={article.image_alt}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = "none";
-                      }}
-                    />
-                    {!article.image_path && (
+                    {article.image_path ? (
+                      <img
+                        src={article.image_path}
+                        alt={article.image_alt_text || article.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = "none";
+                        }}
+                      />
+                    ) : (
                       <Eye className="w-6 h-6 text-blue-300" />
                     )}
                   </div>
@@ -299,7 +316,9 @@ export default function ArticleApprovalsPage() {
                       <div className="flex items-center gap-3 text-xs text-gray-500">
                         <div className="flex items-center gap-1">
                           <User className="w-3.5 h-3.5" />
-                          <span className="font-medium">{article.author_name}</span>
+                          <span className="font-medium">
+                            {article.author_first_name} {article.author_last_name}
+                          </span>
                         </div>
                         <div className="flex items-center gap-1">
                           <Calendar className="w-3.5 h-3.5" />
@@ -340,16 +359,26 @@ export default function ArticleApprovalsPage() {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleApprove(article.id)}
-                        className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 bg-green-600 text-white rounded-lg font-medium text-xs hover:bg-green-700 transition-colors"
+                        disabled={actionLoading === article.id}
+                        className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 bg-green-600 text-white rounded-lg font-medium text-xs hover:bg-green-700 transition-colors disabled:opacity-50"
                       >
-                        <CheckCircle2 className="w-4 h-4" />
+                        {actionLoading === article.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <CheckCircle2 className="w-4 h-4" />
+                        )}
                         Approve
                       </button>
                       <button
                         onClick={() => handleReject(article.id)}
-                        className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 bg-red-600 text-white rounded-lg font-medium text-xs hover:bg-red-700 transition-colors"
+                        disabled={actionLoading === article.id}
+                        className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 bg-red-600 text-white rounded-lg font-medium text-xs hover:bg-red-700 transition-colors disabled:opacity-50"
                       >
-                        <XCircle className="w-4 h-4" />
+                        {actionLoading === article.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <XCircle className="w-4 h-4" />
+                        )}
                         Reject
                       </button>
                     </div>
@@ -361,40 +390,49 @@ export default function ArticleApprovalsPage() {
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         Approved
                       </div>
-                      <p className="text-xs text-green-600">
-                        {formatDate(article.approved_at!)}
+                      {article.approved_at && (
+                        <p className="text-xs text-green-600">
+                          {formatDate(article.approved_at)}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {article.status === "draft" && (
+                    <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                      <div className="flex items-center gap-1.5 text-slate-700 text-xs font-semibold mb-0.5">
+                        <FileEdit className="w-3.5 h-3.5" />
+                        Draft
+                      </div>
+                      <p className="text-xs text-slate-600">
+                        This article is still being drafted by the author.
                       </p>
                     </div>
                   )}
 
-                  {article.status === "archive" && (
+                  {article.status === "archived" && (
                     <div className="p-3 bg-gray-100 border border-gray-300 rounded-lg">
                       <div className="flex items-center gap-1.5 text-gray-700 text-xs font-semibold mb-0.5">
                         <Archive className="w-3.5 h-3.5" />
                         Archived
                       </div>
-                      <p className="text-xs text-gray-600">
-                        {formatDate(article.archive_at!)}
-                      </p>
+                      {article.archived_at && (
+                        <p className="text-xs text-gray-600">
+                          {formatDate(article.archived_at)}
+                        </p>
+                      )}
                       <button
                         onClick={() => handleDelete(article.id)}
-                        className="mt-3 w-full flex items-center justify-center gap-1.5 px-4 py-2 bg-red-600 text-white rounded-lg font-medium text-xs hover:bg-red-700 transition-colors"
+                        disabled={actionLoading === article.id}
+                        className="mt-3 w-full flex items-center justify-center gap-1.5 px-4 py-2 bg-red-600 text-white rounded-lg font-medium text-xs hover:bg-red-700 transition-colors disabled:opacity-50"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        {actionLoading === article.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4" />
+                        )}
                         Delete
                       </button>
-                    </div>
-                  )}
-
-                  {article.status === "deleted" && (
-                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                      <div className="flex items-center gap-1.5 text-red-700 text-xs font-semibold mb-0.5">
-                        <Trash2 className="w-3.5 h-3.5" />
-                        Deleted
-                      </div>
-                      <p className="text-xs text-red-600">
-                        {article.deleted_at ? formatDate(article.deleted_at) : "Recently deleted"}
-                      </p>
                     </div>
                   )}
                 </div>
