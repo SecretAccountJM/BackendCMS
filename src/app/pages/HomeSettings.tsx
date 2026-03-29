@@ -1,8 +1,9 @@
 'use client'
 
-import React, { useState } from "react";
-import { Save, Plus, Trash2, Upload } from "lucide-react";
+import React, { useState, useEffect, useCallback } from "react";
+import { Save, Plus, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { apiFetch } from "../lib/api";
 
 interface Service {
   id: string;
@@ -59,35 +60,32 @@ const INITIAL_DATA: HomeContent = {
 export function HomeSettings() {
   const [data, setData] = useState<HomeContent>(INITIAL_DATA);
   const [newService, setNewService] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const fetchContent = useCallback(async () => {
+    try {
+      const res = await apiFetch<{ content: HomeContent }>("/site-content/home");
+      setData(res.content);
+    } catch {
+      // No saved content yet — use defaults
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchContent(); }, [fetchContent]);
 
   const handleCollegeSectionChange = (field: string, value: string) => {
-    setData(prev => ({
-      ...prev,
-      collegeSection: {
-        ...prev.collegeSection,
-        [field]: value
-      }
-    }));
+    setData(prev => ({ ...prev, collegeSection: { ...prev.collegeSection, [field]: value } }));
   };
 
   const handleDeanSectionChange = (field: string, value: string) => {
-    setData(prev => ({
-      ...prev,
-      deanSection: {
-        ...prev.deanSection,
-        [field]: value
-      }
-    }));
+    setData(prev => ({ ...prev, deanSection: { ...prev.deanSection, [field]: value } }));
   };
 
   const handleRegistrarChange = (field: string, value: string) => {
-    setData(prev => ({
-      ...prev,
-      registrarSection: {
-        ...prev.registrarSection,
-        [field]: value
-      }
-    }));
+    setData(prev => ({ ...prev, registrarSection: { ...prev.registrarSection, [field]: value } }));
   };
 
   const addService = () => {
@@ -96,10 +94,7 @@ export function HomeSettings() {
       ...prev,
       registrarSection: {
         ...prev.registrarSection,
-        services: [
-          ...prev.registrarSection.services,
-          { id: Date.now().toString(), title: newService }
-        ]
+        services: [...prev.registrarSection.services, { id: Date.now().toString(), title: newService }]
       }
     }));
     setNewService("");
@@ -115,43 +110,42 @@ export function HomeSettings() {
     }));
   };
 
-  const handleSave = () => {
-    localStorage.setItem('homeContent', JSON.stringify(data));
-    toast.success("Home page content updated successfully!");
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await apiFetch("/site-content/home", {
+        method: "PUT",
+        body: JSON.stringify({ content: data }),
+      });
+      toast.success("Home page content updated successfully!");
+    } catch (err: any) {
+      toast.error(`Failed to save: ${err.message}`);
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5">
       {/* College Intro Section */}
       <div className="ceit-card p-5">
         <h2 className="text-base font-bold text-slate-900 mb-4 uppercase tracking-wide">College Intro Section</h2>
-        
         <div className="space-y-3">
           <div>
             <label className="block text-xs font-bold text-slate-900 mb-2 uppercase">Section Title</label>
-            <input
-              type="text"
-              value={data.collegeSection.title}
-              onChange={(e) => handleCollegeSectionChange('title', e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
-            />
+            <input type="text" value={data.collegeSection.title} onChange={(e) => handleCollegeSectionChange('title', e.target.value)} className="w-full px-3 py-2 bg-white border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900" />
           </div>
-
           <div>
             <label className="block text-xs font-bold text-slate-900 mb-2 uppercase">Description</label>
-            <textarea
-              value={data.collegeSection.description}
-              onChange={(e) => handleCollegeSectionChange('description', e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 resize-none h-20"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-900 mb-2 uppercase">Organization Logos</label>
-            <div className="border-2 border-dashed border-gray-400 p-5 text-center hover:border-gray-600 transition-colors cursor-pointer">
-              <Upload className="w-6 h-6 text-gray-500 mx-auto mb-2" />
-              <p className="text-xs text-gray-600 font-medium">Click to upload logos image</p>
-            </div>
+            <textarea value={data.collegeSection.description} onChange={(e) => handleCollegeSectionChange('description', e.target.value)} className="w-full px-3 py-2 bg-white border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 resize-none h-20" />
           </div>
         </div>
       </div>
@@ -159,34 +153,14 @@ export function HomeSettings() {
       {/* Meet the Dean Section */}
       <div className="ceit-card p-5">
         <h2 className="text-base font-bold text-slate-900 mb-4 uppercase tracking-wide">Meet the Dean</h2>
-        
         <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-bold text-slate-900 mb-2 uppercase">Dean Name</label>
-              <input
-                type="text"
-                value={data.deanSection.name}
-                onChange={(e) => handleDeanSectionChange('name', e.target.value)}
-                className="w-full px-3 py-2 bg-white border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-900 mb-2 uppercase">Dean Photo</label>
-              <div className="border-2 border-dashed border-gray-400 p-3 text-center hover:border-gray-600 transition-colors cursor-pointer">
-                <Upload className="w-4 h-4 text-gray-500 mx-auto" />
-              </div>
-            </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-900 mb-2 uppercase">Dean Name</label>
+            <input type="text" value={data.deanSection.name} onChange={(e) => handleDeanSectionChange('name', e.target.value)} className="w-full px-3 py-2 bg-white border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900" />
           </div>
-
           <div>
             <label className="block text-xs font-bold text-slate-900 mb-2 uppercase">Description</label>
-            <textarea
-              value={data.deanSection.description}
-              onChange={(e) => handleDeanSectionChange('description', e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 resize-none h-20"
-            />
+            <textarea value={data.deanSection.description} onChange={(e) => handleDeanSectionChange('description', e.target.value)} className="w-full px-3 py-2 bg-white border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 resize-none h-20" />
           </div>
         </div>
       </div>
@@ -194,115 +168,59 @@ export function HomeSettings() {
       {/* Registrar Section */}
       <div className="ceit-card p-5">
         <h2 className="text-base font-bold text-slate-900 mb-4 uppercase tracking-wide">Registrar's Office</h2>
-        
         <div className="space-y-3">
           <div>
             <label className="block text-xs font-bold text-slate-900 mb-2 uppercase">Office Title</label>
-            <input
-              type="text"
-              value={data.registrarSection.title}
-              onChange={(e) => handleRegistrarChange('title', e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
-            />
+            <input type="text" value={data.registrarSection.title} onChange={(e) => handleRegistrarChange('title', e.target.value)} className="w-full px-3 py-2 bg-white border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900" />
           </div>
-
           <div>
             <label className="block text-xs font-bold text-slate-900 mb-2 uppercase">Description</label>
-            <textarea
-              value={data.registrarSection.description}
-              onChange={(e) => handleRegistrarChange('description', e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 resize-none h-16"
-            />
+            <textarea value={data.registrarSection.description} onChange={(e) => handleRegistrarChange('description', e.target.value)} className="w-full px-3 py-2 bg-white border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 resize-none h-16" />
           </div>
-
-          {/* Contact Info */}
           <div className="border-t border-gray-300 pt-3">
             <h3 className="text-xs font-bold text-slate-900 mb-3 uppercase">Contact Information</h3>
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="block text-xs font-bold text-slate-900 mb-1 uppercase">Phone</label>
-                <input
-                  type="text"
-                  value={data.registrarSection.phone}
-                  onChange={(e) => handleRegistrarChange('phone', e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
-                />
+                <input type="text" value={data.registrarSection.phone} onChange={(e) => handleRegistrarChange('phone', e.target.value)} className="w-full px-3 py-2 bg-white border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900" />
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-900 mb-1 uppercase">Email</label>
-                <input
-                  type="text"
-                  value={data.registrarSection.email}
-                  onChange={(e) => handleRegistrarChange('email', e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
-                />
+                <input type="text" value={data.registrarSection.email} onChange={(e) => handleRegistrarChange('email', e.target.value)} className="w-full px-3 py-2 bg-white border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900" />
               </div>
               <div className="col-span-2">
                 <label className="block text-xs font-bold text-slate-900 mb-1 uppercase">Location</label>
-                <input
-                  type="text"
-                  value={data.registrarSection.location}
-                  onChange={(e) => handleRegistrarChange('location', e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
-                />
+                <input type="text" value={data.registrarSection.location} onChange={(e) => handleRegistrarChange('location', e.target.value)} className="w-full px-3 py-2 bg-white border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900" />
               </div>
               <div className="col-span-2">
                 <label className="block text-xs font-bold text-slate-900 mb-1 uppercase">Office Hours</label>
-                <input
-                  type="text"
-                  value={data.registrarSection.hours}
-                  onChange={(e) => handleRegistrarChange('hours', e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
-                />
+                <input type="text" value={data.registrarSection.hours} onChange={(e) => handleRegistrarChange('hours', e.target.value)} className="w-full px-3 py-2 bg-white border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900" />
               </div>
             </div>
           </div>
-
-          {/* Services List */}
           <div className="border-t border-gray-300 pt-3">
             <h3 className="text-xs font-bold text-slate-900 mb-3 uppercase">Services</h3>
             <div className="space-y-2 mb-2">
               {data.registrarSection.services.map((service) => (
                 <div key={service.id} className="ceit-card-soft flex items-center justify-between p-2">
                   <span className="text-xs text-slate-900 font-medium">{service.title}</span>
-                  <button
-                    onClick={() => removeService(service.id)}
-                    className="px-3 py-1 bg-orange-600 text-white rounded text-xs font-bold hover:bg-orange-700"
-                  >
-                    ARCHIVE
-                  </button>
+                  <button onClick={() => removeService(service.id)} className="px-3 py-1 bg-red-600 text-white rounded text-xs font-bold hover:bg-red-700">REMOVE</button>
                 </div>
               ))}
             </div>
-            
             <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Add new service..."
-                value={newService}
-                onChange={(e) => setNewService(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && addService()}
-                className="flex-1 px-3 py-2 bg-white border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
-              />
-              <button
-                onClick={addService}
-                className="flex items-center gap-1.5 px-3 py-2 bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 uppercase"
-              >
-                <Plus className="w-4 h-4" />
-                Add
+              <input type="text" placeholder="Add new service..." value={newService} onChange={(e) => setNewService(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && addService()} className="flex-1 px-3 py-2 bg-white border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900" />
+              <button onClick={addService} className="flex items-center gap-1.5 px-3 py-2 bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 uppercase">
+                <Plus className="w-4 h-4" /> Add
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Save Button */}
       <div className="flex justify-end">
-        <button
-          onClick={handleSave}
-          className="flex items-center gap-2 px-5 py-2 bg-slate-900 text-white font-bold hover:bg-slate-800 transition-colors text-xs uppercase"
-        >
-          <Save className="w-4 h-4" />
+        <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-5 py-2 bg-slate-900 text-white font-bold hover:bg-slate-800 transition-colors text-xs uppercase disabled:opacity-50">
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           Save Home Content
         </button>
       </div>

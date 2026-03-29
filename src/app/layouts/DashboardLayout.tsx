@@ -10,14 +10,20 @@ import {
   Settings,
   Users,
   BookOpen,
-  GraduationCap,
   Newspaper,
   BookText,
   LogOut,
+  KeyRound,
+  Loader2,
+  Save,
+  X,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { useAuth } from "@/app/context/AuthContext";
+import { useState } from "react";
+import { toast } from "sonner";
+import { apiFetch } from "@/app/lib/api";
 
 function cn(...inputs: any[]) {
   return twMerge(clsx(inputs));
@@ -27,6 +33,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuth();
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
 
   // If not on login page and not authenticated, redirect
   React.useEffect(() => {
@@ -49,13 +59,13 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     { name: "Home Settings", path: "/home-settings", icon: Settings },
     { name: "Academics", path: "/academics-settings", icon: BookOpen },
     { name: "Administrator", path: "/administrator-settings", icon: Users },
-    { name: "Curriculum", path: "/programs", icon: GraduationCap },
     { name: "News", path: "/news-settings", icon: Newspaper },
     { name: "CEIT Newsletter", path: "/newsletter-settings", icon: BookText },
   ];
 
   const getPageTitle = () => {
     if (pathname === "/approvals") return "Approval";
+    if (pathname === "/user-management") return "User Management";
     const all = [...navItems, ...contentItems];
     return all.find((i) => i.path === pathname)?.name ?? "Dashboard";
   };
@@ -63,6 +73,28 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const handleLogout = () => {
     logout();
     router.replace('/login');
+  };
+
+  const handleChangePassword = async () => {
+    if (!currentPassword.trim() || !newPassword.trim()) {
+      toast.error("Both fields are required.");
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      await apiFetch("/users/me/password", {
+        method: "PUT",
+        body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+      });
+      toast.success("Password changed successfully.");
+      setShowChangePassword(false);
+      setCurrentPassword("");
+      setNewPassword("");
+    } catch (err: any) {
+      toast.error(`Failed to change password: ${err.message}`);
+    } finally {
+      setChangingPassword(false);
+    }
   };
 
   const displayName = user?.name?.trim() || `${user?.first_name ?? ''} ${user?.last_name ?? ''}`.trim() || user?.email || 'Admin';
@@ -141,24 +173,79 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
           <div className="mx-4 h-px bg-slate-800 my-4" />
 
-          <div className="px-4 mb-2 text-[10px] font-semibold text-slate-500 uppercase tracking-[0.12em]">Admin Controls</div>
-          <ul className="space-y-1 px-3">
-            <li>
-              <Link href="/approvals" className={cn(
-                "group flex items-center gap-2.5 px-3 py-2 rounded-md transition-colors border",
-                pathname === "/approvals"
-                  ? "bg-orange-500 text-white border-orange-400"
-                  : "text-slate-300 border-transparent hover:text-white hover:bg-slate-900 hover:border-slate-800"
-              )}>
-                <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-slate-300 group-hover:text-white" />
-                <span className={cn(
-                  "relative text-sm font-medium after:content-[''] after:absolute after:left-0 after:-bottom-0.5 after:h-0.5 after:w-full after:origin-left after:scale-x-0 after:transition-transform after:duration-300 group-hover:after:scale-x-100",
-                  pathname === "/approvals" ? "after:scale-x-100 after:bg-[#1f3168]" : "after:bg-orange-400"
-                )}>Approval</span>
-              </Link>
-            </li>
-          </ul>
+          {user?.role_name === "super_admin" && (
+            <>
+              <div className="px-4 mb-2 text-[10px] font-semibold text-slate-500 uppercase tracking-[0.12em]">Admin Controls</div>
+              <ul className="space-y-1 px-3">
+                <li>
+                  <Link href="/approvals" className={cn(
+                    "group flex items-center gap-2.5 px-3 py-2 rounded-md transition-colors border",
+                    pathname === "/approvals"
+                      ? "bg-orange-500 text-white border-orange-400"
+                      : "text-slate-300 border-transparent hover:text-white hover:bg-slate-900 hover:border-slate-800"
+                  )}>
+                    <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-slate-300 group-hover:text-white" />
+                    <span className={cn(
+                      "relative text-sm font-medium after:content-[''] after:absolute after:left-0 after:-bottom-0.5 after:h-0.5 after:w-full after:origin-left after:scale-x-0 after:transition-transform after:duration-300 group-hover:after:scale-x-100",
+                      pathname === "/approvals" ? "after:scale-x-100 after:bg-[#1f3168]" : "after:bg-orange-400"
+                    )}>Approval</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/user-management" className={cn(
+                    "group flex items-center gap-2.5 px-3 py-2 rounded-md transition-colors border",
+                    pathname === "/user-management"
+                      ? "bg-orange-500 text-white border-orange-400"
+                      : "text-slate-300 border-transparent hover:text-white hover:bg-slate-900 hover:border-slate-800"
+                  )}>
+                    <Users className="w-4 h-4 flex-shrink-0 text-slate-300 group-hover:text-white" />
+                    <span className={cn(
+                      "relative text-sm font-medium after:content-[''] after:absolute after:left-0 after:-bottom-0.5 after:h-0.5 after:w-full after:origin-left after:scale-x-0 after:transition-transform after:duration-300 group-hover:after:scale-x-100",
+                      pathname === "/user-management" ? "after:scale-x-100 after:bg-[#1f3168]" : "after:bg-orange-400"
+                    )}>User Management</span>
+                  </Link>
+                </li>
+              </ul>
+            </>
+          )}
         </nav>
+
+        {/* Change Password Panel */}
+        {showChangePassword && (
+          <div className="px-3 py-3 border-t border-slate-800 bg-slate-900/80 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <KeyRound className="w-3.5 h-3.5 text-slate-400" />
+                <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wide">Change Password</span>
+              </div>
+              <button onClick={() => { setShowChangePassword(false); setCurrentPassword(""); setNewPassword(""); }} className="text-slate-500 hover:text-slate-300">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <input
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="Current password"
+              className="w-full px-2.5 py-1.5 bg-slate-800 border border-slate-700 text-xs text-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-orange-500 placeholder-slate-500"
+            />
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="New password"
+              className="w-full px-2.5 py-1.5 bg-slate-800 border border-slate-700 text-xs text-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-orange-500 placeholder-slate-500"
+            />
+            <button
+              onClick={handleChangePassword}
+              disabled={changingPassword}
+              className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 bg-orange-600 text-white text-xs font-bold rounded hover:bg-orange-700 uppercase disabled:opacity-50"
+            >
+              {changingPassword ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+              Update Password
+            </button>
+          </div>
+        )}
 
         {/* User Profile + Logout */}
         <div className="p-3 border-t border-slate-800 bg-slate-900">
@@ -170,6 +257,13 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               <p className="text-xs font-semibold text-slate-100 truncate">{displayName}</p>
               <span className="text-[10px] px-1.5 py-0.5 bg-blue-600/20 text-blue-300 border border-blue-700/50 rounded font-medium inline-block">{displayRole}</span>
             </div>
+            <button
+              onClick={() => setShowChangePassword(!showChangePassword)}
+              title="Change password"
+              className="w-7 h-7 flex items-center justify-center rounded-md text-slate-500 hover:text-orange-400 hover:bg-orange-500/10 transition-colors"
+            >
+              <KeyRound className="w-3.5 h-3.5" />
+            </button>
             <button
               id="logout-btn"
               onClick={handleLogout}
