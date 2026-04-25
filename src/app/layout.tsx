@@ -6,8 +6,11 @@ import "@/styles/fonts.css";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
-  title: "Dashboard CMS",
-  description: "Global Dashboard Management System",
+  title: {
+    default: "CEIT CMS - Dashboard",
+    template: "CEIT CMS - %s",
+  },
+  description: "CEIT Content Management System",
 };
 
 export default function RootLayout({
